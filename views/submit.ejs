@@ -2,7 +2,7 @@
 
 <p class="h4 p-4">Enter the names of movies and/or tv series that you've seen below.</p>
 
-<div class="container">
+<div class="container-fluid">
 	<div class="row">
 		<div class="col-md jumbotron">
 			<i class="fas fa-tv fa-4x"></i>
@@ -13,8 +13,8 @@
 					<div class="row">
 						<div class="col-11 p-0"><input type="text" class="form-control text-center" name="series_name"
 								placeholder="Enter a TV Series"></div>
-						<div class="col-1 p-0 d-flex"><button type="submit" class="no-style"><i
-									class="fas fa-plus fa-2x" style="color: #2a2e33;"></i></button></div>
+						<div class="col-1 p-0"><button type="submit" class="no-style"><i class="fas fa-plus fa-2x"
+									style="color: #2a2e33;"></i></button></div>
 					</div>
 				</div>
 			</form>
@@ -37,11 +37,11 @@
 						<% seriesArray.forEach((row,index) => { %>
 						<tr>
 							<th scope="row"> <%= index+1 %> </th>
-							<td scope="row"> <%= row.Title %> </th>
-							<td scope="row"> <%= row.Year %> </th>
-							<td scope="row"> <%= row.Genre %> </th>
-							<td scope="row"> <%= row.imdbRating %> </th>
-							<td scope="row"> <%= row.totalSeasons %> </th>
+							<td scope="row"> <%= row.Title %> </td>
+							<td scope="row"> <%= row.Year %> </td>
+							<td scope="row"> <%= row.Genre %> </td>
+							<td scope="row"> <%= row.imdbRating %> </td>
+							<td scope="row"> <%= row.totalSeasons %> </td>
 						</tr>
 						<% }) %>
 					</tbody>
@@ -59,13 +59,13 @@
 					<div class="row">
 						<div class="col-11 p-0"><input type="text" class="form-control text-center" name="movie_name"
 								placeholder="Enter a Movie"></div>
-						<div class="col-1 p-0 d-flex"><button type="submit" class="no-style"><i
-									class="fas fa-plus fa-2x" style="color: #343a40;"></i></button></div>
+						<div class="col-1 p-0"><button type="submit" class="no-style"><i class="fas fa-plus fa-2x"
+									style="color: #343a40;"></i></button></div>
 					</div>
 				</div>
 			</form>
 
-			<!--			<%# if(movieArray.length > 0){ %>
+			<% if(moviesArray.length > 0){ %>
 			<div class="table-responsive">
 				<table class="table table-hover table-dark table-bordered">
 					<thead class="thead-dark">
@@ -73,28 +73,30 @@
 							<th scope="col">#</th>
 							<th scope="col">Title</th>
 							<th scope="col">Year</th>
+							<th scope="col">Runtime</th>
 							<th scope="col">Genre</th>
+							<th scope="col">Director</th>
 							<th scope="col">imdbRating</th>
-							<th scope="col">totalSeasons</th>
 						</tr>
 					</thead>
 					<tbody>
 
-						<%# movieArray.forEach((row,index) => { %>
+						<% moviesArray.forEach((row,index) => { %>
 						<tr>
-							<th scope="row"> <%#= index+1 %> </th>
-							<td scope="row"> <%#= row.Title %> </th>
-							<td scope="row"> <%#= row.Year %> </th>
-							<td scope="row"> <%#= row.Genre %> </th>
-							<td scope="row"> <%#= row.imdbRating %> </th>
-							<td scope="row"> <%#= row.totalSeasons %> </th>
+							<th scope="row"> <%= index+1 %> </th>
+							<td scope="row"> <%= row.Title %> </td>
+							<td scope="row"> <%= row.Year %> </td>
+							<td scope="row"> <%= row.Runtime %> </td>
+							<td scope="row"> <%= row.Genre %> </td>
+							<td scope="row"> <%= row.Director %> </td>
+							<td scope="row"> <%= row.imdbRating %> </td>
 						</tr>
-						<%# }) %>
+						<% }) %>
 					</tbody>
 				</table>
 			</div>
-			<%# } %>
--->
+			<% } %>
+
 		</div>
 	</div>
 

@@ -55,6 +55,7 @@ const moviesSchema = new mongoose.Schema({
 	Director: String,
 	imdbRating: String,
 	Genre: String,
+	Runtime: String
 });
 
 const userSchema = new mongoose.Schema({
@@ -233,6 +234,37 @@ app.post("/submit/tv_series", (req, res) => {
 		}
 	});
 });
+
+app.post("/submit/movie", (req, res) => {
+	const url =
+		"http://www.omdbapi.com/?t=" + req.body.movie_name + "&apikey=" + process.env.OMDB_API_KEY;
+	let options = { json: true };
+
+	request(url, options, (error, result, body) => {
+		if (error) {
+			return console.log(error);
+		}
+		if (!error && result.statusCode == 200) {
+			if (body.Response === "True" && body.Type === "movie") {
+				User.findById(req.user.id, function (err, foundUser) {
+					if (err) {
+						console.log(err);
+					} else {
+						if (foundUser) {
+							foundUser.movies.push(body);
+							foundUser.save(function () {
+								res.redirect("/submit");
+							});
+						}
+					}
+				});
+			} else {
+				res.redirect("/submit");
+			}
+		}
+	});
+});
+
 
 app.listen(process.env.PORT || 3000, function () {
 	console.log("___Server has started sucessfully.");
