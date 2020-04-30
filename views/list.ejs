@@ -1,20 +1,39 @@
 <%- include('partials/header') %>
 
-<div class="jumbotron text-center">
-  <div class="container">
-    <i class="fas fa-key fa-6x"></i>
-    <h1 class="display-3">You've Discovered My Secret!</h1>
+<div class="jumbotron pt-4 text-center">
+    <div class="container">
+        <h1 class="display-3">Hey! <br> Welcome to Your Movies and Series Database</h1>
+        <p class="lead">Here, you can keep your own list of movies and series.</p>
+        <hr>
+    </div>
+    <p class="lead text-left h4 p-4">These are some of the users with their own lists.</p>
+    <div class="table-responsive">
+        <table class="table table-hover table-dark table-bordered">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">User</th>
+                    <th scope="col">Number of TV Series</th>
+                    <th scope="col">Number of Movies</th>
+                    <th scope="col">In Detail</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% allUsers.forEach((user,index) => { %>
+                <tr>
+                    <th scope="row"> <%= index+1 %> </th>
+                    <td> <%= user.username %> </td>
+                    <td> <%= user.series.length %> </td>
+                    <td> <%= user.movies.length %> </td>
+                    <td> <a href="/lists/<%=user._id%>">Show lists</a> </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+    <p class="lead">To add your own list of TV Series and Movies.</p>
+    <a class="btn btn-dark btn-lg" href="/submit" role="button">Add</a>
 
-
-    <% usersWithSecrets.forEach(function(user){  %>
-    <p class="secret-text"><%= user.secret %></p>
-    <% }) %>
-
-    <hr>
-
-    <a class="btn btn-light btn-lg" href="/logout" role="button">Log Out</a>
-    <a class="btn btn-dark btn-lg" href="/submit" role="button">Submit a Secret</a>
-  </div>
 </div>
 
 <%- include('partials/footer') %>

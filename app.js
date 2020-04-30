@@ -10,7 +10,7 @@ const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const findOrCreate = require("mongoose-findorcreate");
 const request = require("request");
-
+const _ = require("lodash");
 const app = express();
 
 app.use(express.static("public"));
@@ -70,7 +70,7 @@ const userSchema = new mongoose.Schema({
 userSchema.plugin(passportLocalMongoose);
 userSchema.plugin(findOrCreate);
 
-const User = new mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
 
 passport.use(User.createStrategy());
 
@@ -94,12 +94,10 @@ passport.use(
 			userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
 		},
 		function (accessToken, refreshToken, profile, cb) {
-			User.findOrCreate({ googleId: profile.id, username: profile.displayName }, function (
-				err,
-				user
-			) {
-				return cb(null, user);
-			});
+			User.findOrCreate(
+				{ googleId: profile.id, username: profile.displayName },
+				(err, user) => cb(null, user)
+			);
 		}
 	)
 );
@@ -134,7 +132,21 @@ app.get("/logout", function (req, res) {
 });
 
 app.get("/lists", function (req, res) {
-	res.redirect("submit");
+	User.find({}, (err, users) => {
+		res.render("list", { allUsers: users });
+	});
+});
+
+app.get("/lists/:userId", (req, res) => {
+	const requestedId = req.params.userId;
+
+	User.findOne({ _id: requestedId }, (err, foundUser) => {
+		res.render("table", {
+			userName: foundUser.username,
+			seriesArray: foundUser.series,
+			moviesArray: foundUser.movies,
+		});
+	});
 });
 
 app.get("/submit", function (req, res) {
@@ -146,25 +158,6 @@ app.get("/submit", function (req, res) {
 });
 
 /* post routes */
-app.post("/submit", function (req, res) {
-	const submittedSecret = req.body.secret;
-
-	/* update database with secret*/
-	User.findById(req.user.id, function (err, foundUser) {
-		if (err) {
-			console.log(err);
-		} else {
-			if (foundUser) {
-				foundUser.secret = submittedSecret;
-				foundUser.save(function () {
-					// res.redirect("/lists");
-					res.redirect("/submit");
-				});
-			}
-		}
-	});
-});
-
 app.post("/register", function (req, res) {
 	User.register({ username: req.body.username }, req.body.password, function (err, user) {
 		if (err) {
@@ -172,7 +165,6 @@ app.post("/register", function (req, res) {
 			res.redirect("/register");
 		} else {
 			passport.authenticate("local")(req, res, function () {
-				// res.redirect("/lists"); ///////////////////////
 				res.redirect("/submit");
 			});
 		}
@@ -189,8 +181,7 @@ app.post("/login", function (req, res) {
 			console.log(err);
 		} else {
 			passport.authenticate("local")(req, res, function () {
-				// res.redirect("/lists"); //////////
-				res.redirect("/submit");
+				res.redirect("/lists");
 			});
 		}
 	});

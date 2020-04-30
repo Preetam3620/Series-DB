@@ -2,6 +2,7 @@
 
 <p class="text-center h4 p-4">Enter the names of movies and/or tv series that you've seen.</p>
 
+
 <div class="container-fluid text-center">
 	<div class="row">
 		<div class="col-md jumbotron">
@@ -43,7 +44,7 @@
 							<td> <%= row.imdbRating %> </td>
 							<td> <%= row.totalSeasons %> </td>
 						</tr>
-						<% }) %>
+						<% }); %>
 					</tbody>
 				</table>
 			</div>
@@ -53,6 +54,7 @@
 		<div class="col-md jumbotron">
 			<i class="fas fa-video fa-4x"></i>
 			<h1 class="display-3">Movies</h1>
+
 
 			<form action="/submit/movie" method="POST">
 				<div class="form-group container">
@@ -98,8 +100,10 @@
 			<% } %>
 
 		</div>
-	</div>
 
+	</div>
+	<p class="text-right h5 p-4">As we know that there are thousands of movies out there. So just add your top movies.
+	</p>
 </div>
 
 <%- include('partials/footer') %>

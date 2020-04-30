@@ -1,0 +1,78 @@
+<%- include('partials/header') %>
+
+<% let firstName = userName.split(" ")[0] %>
+
+<div class="container-fluid text-center tables-container"
+	style="font-family: 'Cairo', sans-serif; background-color:#e8ecef;">
+	<p class="text-center h3 p-4">Here is the <%=firstName%>'s list of Movies and TV Series.</p>
+	<div class="row">
+		<div class="col-md jumbotron">
+
+			<% if(seriesArray.length > 0){ %>
+			<div class="table-responsive">
+				<table class="table table-hover table-dark table-bordered">
+					<thead class="thead-dark">
+						<tr>
+							<th scope="col">#</th>
+							<th scope="col">Title</th>
+							<th scope="col">Year</th>
+							<th scope="col">Genre</th>
+							<th scope="col">imdbRating</th>
+							<th scope="col">totalSeasons</th>
+						</tr>
+					</thead>
+					<tbody>
+						<% seriesArray.forEach((row,index) => { %>
+						<tr>
+							<th scope="row"> <%= index+1 %> </th>
+							<td> <%= row.Title %> </td>
+							<td> <%= row.Year %> </td>
+							<td> <%= row.Genre %> </td>
+							<td> <%= row.imdbRating %> </td>
+							<td> <%= row.totalSeasons %> </td>
+						</tr>
+						<% }); %>
+					</tbody>
+				</table>
+			</div>
+			<% } %>
+
+		</div>
+		<div class="col-md jumbotron">
+			<% if(moviesArray.length > 0){ %>
+			<div class="table-responsive">
+				<table class="table table-hover table-dark table-bordered">
+					<thead class="thead-dark">
+						<tr>
+							<th scope="col">#</th>
+							<th scope="col">Title</th>
+							<th scope="col">Year</th>
+							<th scope="col">Runtime</th>
+							<th scope="col">Genre</th>
+							<th scope="col">Director</th>
+							<th scope="col">imdbRating</th>
+						</tr>
+					</thead>
+					<tbody>
+						<% moviesArray.forEach((row,index) => { %>
+						<tr>
+							<th scope="row"> <%= index+1 %> </th>
+							<td> <%= row.Title %> </td>
+							<td> <%= row.Year %> </td>
+							<td> <%= row.Runtime %> </td>
+							<td> <%= row.Genre %> </td>
+							<td> <%= row.Director %> </td>
+							<td> <%= row.imdbRating %> </td>
+						</tr>
+						<% }) %>
+					</tbody>
+				</table>
+			</div>
+			<% } %>
+
+		</div>
+	</div>
+</div>
+
+
+<%- include('partials/footer') %>
