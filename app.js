@@ -55,7 +55,7 @@ const moviesSchema = new mongoose.Schema({
 	Director: String,
 	imdbRating: String,
 	Genre: String,
-	Runtime: String
+	Runtime: String,
 });
 
 const userSchema = new mongoose.Schema({
@@ -135,15 +135,6 @@ app.get("/logout", function (req, res) {
 
 app.get("/lists", function (req, res) {
 	res.redirect("submit");
-	// User.find({ "secret": { $ne: null } }, function (err, foundUsers) {
-	//     if (err) {
-	//         console.log(err);
-	//     } else {
-	//         if (foundUsers) {
-	//             res.render("secrets", { usersWithSecrets: foundUsers })
-	//         }
-	//     }
-	// })
 });
 
 app.get("/submit", function (req, res) {
@@ -264,7 +255,6 @@ app.post("/submit/movie", (req, res) => {
 		}
 	});
 });
-
 
 app.listen(process.env.PORT || 3000, function () {
 	console.log("___Server has started sucessfully.");

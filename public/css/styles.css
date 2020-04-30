@@ -1,20 +1,19 @@
 body {
-    font-family: "Cairo", sans-serif;
-    background-color: #e8ecef;
-    text-align: center;
+	font-family: "Cairo", sans-serif;
+	background-color: #e8ecef;
 }
 
 i {
-    margin: auto 2%;
+	margin: auto 2%;
 }
 
 .centered {
-    padding-top: 200px;
+	padding-top: 200px;
 }
 
 .no-style {
-    background-color: transparent;
-    border: none;
+	background-color: transparent;
+	border: none;
 }
 
 @media (max-width: 1150px) {
