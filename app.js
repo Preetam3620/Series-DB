@@ -198,9 +198,10 @@ app.post("/submit/tv_series", (req, res) => {
 		}
 		if (!error && result.statusCode == 200) {
 			if (body.Response === "True" && body.Type === "series") {
-				User.findById(req.user.id, function (err, foundUser) {
+				User.findById(req.user._id, function (err, foundUser) {
 					if (err) {
 						console.log(err);
+						res.redirect("/submit");
 					} else {
 						if (foundUser) {
 							foundUser.series.push(body);
@@ -228,9 +229,10 @@ app.post("/submit/movie", (req, res) => {
 		}
 		if (!error && result.statusCode == 200) {
 			if (body.Response === "True" && body.Type === "movie") {
-				User.findById(req.user.id, function (err, foundUser) {
+				User.findById(req.user._id, function (err, foundUser) {
 					if (err) {
 						console.log(err);
+						res.redirect("/submit");
 					} else {
 						if (foundUser) {
 							foundUser.movies.push(body);
