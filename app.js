@@ -122,6 +122,10 @@ app.get("/login", function (req, res) {
 	res.render("login");
 });
 
+app.get("/heyjude", function (req, res) {
+	res.send("404, This page Does not exist");
+});
+
 app.get("/register", function (req, res) {
 	res.render("register");
 });
