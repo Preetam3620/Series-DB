@@ -1,254 +1,99 @@
-require("dotenv").config();
+require('dotenv').config();
+const path = require('node:path');
+const express = require('express');
+const mongoose = require('mongoose');
+const session = require('express-session');
+const { Passport } = require('passport');
+const localModule = require('passport-local-mongoose');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const seriesSchema = new mongoose.Schema({ Title: String, Year: String, imdbRating: String, totalSeasons: String, Genre: String });
+const moviesSchema = new mongoose.Schema({ Title: String, Year: String, Director: String, imdbRating: String, Genre: String, Runtime: String });
+const userSchema = new mongoose.Schema({ username: String, googleId: String, secret: String, series: [seriesSchema], movies: [moviesSchema] });
+userSchema.plugin(localModule.default || localModule);
+const User = mongoose.model('User', userSchema);
 
-const express = require("express");
-const bodyParser = require("body-parser");
-const ejs = require("ejs");
-const mongoose = require("mongoose");
-const session = require("express-session");
-const passport = require("passport");
-const passportLocalMongoose = require("passport-local-mongoose");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const findOrCreate = require("mongoose-findorcreate");
-const request = require("request");
-const _ = require("lodash");
-const app = express();
-
-app.use(express.static("public"));
-app.set("view engine", "ejs");
-app.use(bodyParser.urlencoded({ extended: true }));
-
-/* express session settings */
-app.use(
-	session({
-		secret: "A secret.",
-		resave: false,
-		saveUninitialized: false,
-	})
-);
-
-app.use(passport.initialize());
-app.use(passport.session());
-
-mongoose.connect(
-	"mongodb+srv://" +
-		process.env.MONGO_USER +
-		":" +
-		process.env.MONGO_PWD +
-		"@cluster0-bq71x.mongodb.net/seriesDB",
-	{ useNewUrlParser: true, useUnifiedTopology: true }
-);
-// mongoose.connect("mongodb://localhost:27017/userDB", { useNewUrlParser: true, useUnifiedTopology: true });
-mongoose.set("useCreateIndex", true);
-
-/* mongoose model */
-const seriesSchema = new mongoose.Schema({
-	Title: String,
-	Year: String,
-	imdbRating: String,
-	totalSeasons: String,
-	Genre: String,
-});
-
-const moviesSchema = new mongoose.Schema({
-	Title: String,
-	Year: String,
-	Director: String,
-	imdbRating: String,
-	Genre: String,
-	Runtime: String,
-});
-
-const userSchema = new mongoose.Schema({
-	username: String,
-	password: String,
-	secret: String,
-	googleId: String,
-	series: [seriesSchema],
-	movies: [moviesSchema],
-});
-
-userSchema.plugin(passportLocalMongoose);
-userSchema.plugin(findOrCreate);
-
-const User = mongoose.model("User", userSchema);
-
-passport.use(User.createStrategy());
-
-passport.serializeUser(function (user, done) {
-	done(null, user.id);
-});
-
-passport.deserializeUser(function (id, done) {
-	User.findById(id, function (err, user) {
-		done(err, user);
-	});
-});
-
-passport.use(
-	new GoogleStrategy(
-		{
-			clientID: process.env.CLIENT_ID,
-			clientSecret: process.env.CLIENT_SECRET,
-			callbackURL: "https://movies-series-lists.herokuapp.com/auth/google/secrets",
-			// callbackURL: "http://localhost:3000/auth/google/secrets",
-			userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
-		},
-		function (accessToken, refreshToken, profile, cb) {
-			User.findOrCreate(
-				{ googleId: profile.id, username: profile.displayName },
-				(err, user) => cb(null, user)
-			);
-		}
-	)
-);
-
-/* get routes */
-app.get("/", function (req, res) {
-	res.render("home");
-});
-
-app.get("/auth/google", passport.authenticate("google", { scope: ["profile"] }));
-
-app.get(
-	"/auth/google/secrets",
-	passport.authenticate("google", { failureRedirect: "/login" }),
-	function (req, res) {
-		// Successful authentication, redirect home.
-		res.redirect("/lists");
-	}
-);
-
-app.get("/login", function (req, res) {
-	res.render("login");
-});
-
-app.get("/register", function (req, res) {
-	res.render("register");
-});
-
-app.get("/logout", function (req, res) {
-	req.logOut();
-	res.redirect("/");
-});
-
-app.get("/lists", function (req, res) {
-	User.find({}, (err, users) => {
-		res.render("list", { allUsers: users });
-	});
-});
-
-app.get("/lists/:userId", (req, res) => {
-	const requestedId = req.params.userId;
-
-	User.findOne({ _id: requestedId }, (err, foundUser) => {
-		res.render("table", {
-			userName: foundUser.username,
-			seriesArray: foundUser.series,
-			moviesArray: foundUser.movies,
-		});
-	});
-});
-
-app.get("/submit", function (req, res) {
-	if (req.isAuthenticated()) {
-		res.render("submit", { seriesArray: req.user.series, moviesArray: req.user.movies });
-	} else {
-		res.redirect("/login");
-	}
-});
-
-/* post routes */
-app.post("/register", function (req, res) {
-	User.register({ username: req.body.username }, req.body.password, function (err, user) {
-		if (err) {
-			console.log(err);
-			res.redirect("/register");
-		} else {
-			passport.authenticate("local")(req, res, function () {
-				res.redirect("/submit");
-			});
-		}
-	});
-});
-
-app.post("/login", function (req, res) {
-	const user = new User({
-		username: req.body.username,
-		password: req.body.password,
-	});
-	req.login(user, function (err) {
-		if (err) {
-			console.log(err);
-		} else {
-			passport.authenticate("local")(req, res, function () {
-				res.redirect("/lists");
-			});
-		}
-	});
-});
-
-app.post("/submit/tv_series", (req, res) => {
-	const url =
-		"http://www.omdbapi.com/?t=" + req.body.series_name + "&apikey=" + process.env.OMDB_API_KEY;
-	let options = { json: true };
-
-	request(url, options, (error, result, body) => {
-		if (error) {
-			return console.log(error);
-		}
-		if (!error && result.statusCode == 200) {
-			if (body.Response === "True" && body.Type === "series") {
-				User.findById(req.user._id, function (err, foundUser) {
-					if (err) {
-						console.log(err);
-						res.redirect("/submit");
-					} else {
-						if (foundUser) {
-							foundUser.series.push(body);
-							foundUser.save(function () {
-								res.redirect("/submit");
-							});
-						}
-					}
-				});
-			} else {
-				res.redirect("/submit");
-			}
-		}
-	});
-});
-
-app.post("/submit/movie", (req, res) => {
-	const url =
-		"http://www.omdbapi.com/?t=" + req.body.movie_name + "&apikey=" + process.env.OMDB_API_KEY;
-	let options = { json: true };
-
-	request(url, options, (error, result, body) => {
-		if (error) {
-			return console.log(error);
-		}
-		if (!error && result.statusCode == 200) {
-			if (body.Response === "True" && body.Type === "movie") {
-				User.findById(req.user._id, function (err, foundUser) {
-					if (err) {
-						console.log(err);
-						res.redirect("/submit");
-					} else {
-						if (foundUser) {
-							foundUser.movies.push(body);
-							foundUser.save(function () {
-								res.redirect("/submit");
-							});
-						}
-					}
-				});
-			} else {
-				res.redirect("/submit");
-			}
-		}
-	});
-});
-
-app.listen(process.env.PORT || 3000, function () {
-	console.log("___Server has started sucessfully.");
-});
+function createApp({ userModel = User, fetchImpl = globalThis.fetch, env = process.env } = {}) {
+  if (!env.SESSION_SECRET) throw new Error('SESSION_SECRET is required');
+  const app = express();
+  const passport = new Passport();
+  app.set('views', path.join(__dirname, 'views'));
+  app.set('view engine', 'ejs');
+  app.use(express.static(path.join(__dirname, 'public')));
+  app.use(express.urlencoded({ extended: true }));
+  app.use(session({ secret: env.SESSION_SECRET, resave: false, saveUninitialized: false }));
+  app.use(passport.initialize());
+  app.use(passport.session());
+  passport.use(userModel.createStrategy());
+  passport.serializeUser((user, done) => done(null, user.id));
+  passport.deserializeUser((id, done) => { userModel.findById(id).then(user => done(null, user), done); });
+  if (env.CLIENT_ID && env.CLIENT_SECRET) {
+    passport.use(new GoogleStrategy({ clientID: env.CLIENT_ID, clientSecret: env.CLIENT_SECRET, state: true,
+      callbackURL: env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth/google/secrets'
+    }, async (accessToken, refreshToken, profile, done) => {
+      try {
+        let user = await userModel.findOne({ googleId: profile.id });
+        if (!user) user = await userModel.create({ googleId: profile.id, username: profile.displayName });
+        done(null, user);
+      } catch (error) { done(error); }
+    }));
+    app.get('/auth/google', passport.authenticate('google', { scope: ['profile'] }));
+    app.get('/auth/google/secrets', passport.authenticate('google', { failureRedirect: '/login', successRedirect: '/lists' }));
+  } else {
+    app.get(['/auth/google', '/auth/google/secrets'], (req, res) => res.status(503).send('Google sign-in is not configured.'));
+  }
+  app.get('/', (req, res) => res.render('home'));
+  app.get('/login', (req, res) => res.render('login'));
+  app.get('/register', (req, res) => res.render('register'));
+  app.get('/logout', (req, res, next) => { req.logout(error => error ? next(error) : res.redirect('/')); });
+  app.get('/lists', async (req, res) => { res.render('list', { allUsers: await userModel.find({}) }); });
+  app.get('/lists/:userId', async (req, res) => {
+    if (!mongoose.isObjectIdOrHexString(req.params.userId)) return res.sendStatus(404);
+    const user = await userModel.findById(req.params.userId);
+    if (!user) return res.sendStatus(404);
+    res.render('table', { userName: user.username, seriesArray: user.series, moviesArray: user.movies });
+  });
+  const requireLogin = (req, res, next) => req.isAuthenticated() ? next() : res.redirect('/login');
+  app.get('/submit', requireLogin, (req, res) => res.render('submit', { seriesArray: req.user.series, moviesArray: req.user.movies }));
+  app.post('/register', async (req, res, next) => {
+    try { await userModel.register({ username: req.body.username }, req.body.password); }
+    catch (error) {
+      if (error instanceof localModule.errors.AuthenticationError) return res.redirect('/register');
+      throw error;
+    }
+    passport.authenticate('local', { successRedirect: '/submit', failureRedirect: '/register' })(req, res, next);
+  });
+  app.post('/login', passport.authenticate('local', { successRedirect: '/lists', failureRedirect: '/login' }));
+  for (const [route, field, type, collection] of [
+    ['tv_series', 'series_name', 'series', 'series'], ['movie', 'movie_name', 'movie', 'movies']
+  ]) {
+    app.post(`/submit/${route}`, requireLogin, async (req, res) => {
+      const title = req.body[field];
+      if (typeof title !== 'string' || !title.trim()) return res.redirect('/submit');
+      const url = new URL('https://www.omdbapi.com/');
+      url.search = new URLSearchParams({ t: title.trim(), apikey: env.OMDB_API_KEY || '' }).toString();
+      const response = await fetchImpl(url, { signal: AbortSignal.timeout(10000) });
+      if (!response.ok) return res.status(502).send('Movie lookup failed. Please try again.');
+      const body = await response.json();
+      if (body.Response === 'True' && body.Type === type) {
+        await userModel.updateOne({ _id: req.user._id }, { $push: { [collection]: body } }, { runValidators: true });
+      }
+      res.redirect('/submit');
+    });
+  }
+  app.use((error, req, res, next) => {
+    if (res.headersSent) return next(error);
+    console.error(error);
+    res.status(error.status || 500).send('Unable to complete the request.');
+  });
+  return app;
+}
+async function start() {
+  const app = createApp();
+  const uri = process.env.MONGODB_URI || (process.env.MONGO_USER && process.env.MONGO_PWD
+    ? `mongodb+srv://${encodeURIComponent(process.env.MONGO_USER)}:${encodeURIComponent(process.env.MONGO_PWD)}@cluster0-bq71x.mongodb.net/seriesDB`
+    : 'mongodb://127.0.0.1:27017/seriesDB');
+  await mongoose.connect(uri);
+  return app.listen(process.env.PORT || 3000, () => console.log('Server has started successfully.'));
+}
+if (require.main === module) start().catch(error => { console.error(error); process.exitCode = 1; });
+module.exports = { createApp, start, User };
